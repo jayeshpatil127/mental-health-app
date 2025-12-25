@@ -1,30 +1,22 @@
 const express = require("express");
 const passport = require("passport");
-const User = require("../models/User");
+const User = require("../models/user");
 
 const router = express.Router();
 
-/**
- * ======================
- * REGISTER (GET)
- * ======================
- */
+
 router.get("/register", (req, res) => {
   res.render("register", {
     title: "Register",
-    error: null, // ✅ always define
+    error: null, 
   });
 });
 
-/**
- * ======================
- * REGISTER (POST)
- * ======================
- */
+
 router.post("/register", async (req, res) => {
   const { email, password } = req.body;
 
-  // Basic validation
+  // validation
   if (!email || !password) {
     return res.render("register", {
       title: "Register",
@@ -35,7 +27,7 @@ router.post("/register", async (req, res) => {
   try {
     await User.create({
       email: email.toLowerCase().trim(),
-      password,          // assumed hashing in model
+      password,          
       role: "user",
     });
 
@@ -60,11 +52,7 @@ router.post("/register", async (req, res) => {
   }
 });
 
-/**
- * ======================
- * LOGIN (GET)
- * ======================
- */
+
 router.get("/login", (req, res) => {
   res.render("login", {
     title: "Login",
@@ -72,11 +60,7 @@ router.get("/login", (req, res) => {
   });
 });
 
-/**
- * ======================
- * LOGIN (POST)
- * ======================
- */
+
 router.post(
   "/login",
   passport.authenticate("local", {
@@ -91,11 +75,7 @@ router.post(
   }
 );
 
-/**
- * ======================
- * LOGOUT
- * ======================
- */
+
 router.get("/logout", (req, res, next) => {
   req.logout(err => {
     if (err) return next(err);
