@@ -65,7 +65,7 @@ app.use((req, res, next) => {
 });
 
 // ================== ROUTES ==================
-app.use("/checkin", require("./routes/dailycheckin"));
+app.use("/checkin", require("./routes/DailyCheckin"));
 app.use("/api", require("./routes/riskRoutes"));
 app.use("/", require("./routes/dashboard"));
 app.use("/", require("./routes/profile"));
