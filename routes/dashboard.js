@@ -1,37 +1,54 @@
 const express = require("express");
 const router = express.Router();
-const Mood = require("../models/mood");
-
-// Middleware: Ensure user is logged in
-function ensureAuth(req, res, next) {
-  if (req.isAuthenticated()) return next();
-  res.redirect("/login");
-}
+const DailyCheckin = require("../models/DailyCheckin");
+const ensureAuth = require("../middleware/ensureAuth");
 
 router.get("/dashboard", ensureAuth, async (req, res) => {
   const userId = req.user._id;
 
-  // Fetch last 7 moods
-  const moods = await Mood.find({ user: userId }).sort({ createdAt: -1 }).limit(7);
+  // Today date (normalized)
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
 
-  const moodData = {
-    current: moods.length ? moods[0].mood : "No data",
-    previous: moods.filter(m => m.createdAt).map(m => ({
-      day: m.createdAt.toLocaleDateString("en-US", { weekday: "short" }),
-      mood: m.mood
-    })),
-    weeklyLevels: moods.filter(m => m.mood).map(m => {
-      if(m.mood.toLowerCase() === "happy") return 5;
-      if(m.mood.toLowerCase() === "neutral") return 3;
-      if(m.mood.toLowerCase() === "sad") return 1;
-      return 0;
-    }).reverse()
-  };
+  // Last 7 days check-ins
+  const last7 = await DailyCheckin.find({ userId })
+    .sort({ date: -1 })
+    .limit(7);
 
-  // Crisis alert if current mood is sad
-  const crisis = moodData.current.toLowerCase() === "sad";
+  // Today check-in
+  const todayCheckin = last7.find(c =>
+    new Date(c.date).getTime() === today.getTime()
+  );
 
-  res.render("dashboard", { title: "Dashboard", user: req.user, moodData, crisis });
+  // Weekly average mood
+  const avgMood = last7.length
+    ? (
+        last7.reduce((sum, c) => sum + c.mood, 0) / last7.length
+      ).toFixed(1)
+    : null;
+
+  // Streak calculation
+  let streak = 0;
+  for (let i = 0; i < last7.length; i++) {
+    if (i === 0) {
+      streak = 1;
+    } else {
+      const prev = new Date(last7[i - 1].date);
+      const curr = new Date(last7[i].date);
+      const diff = (prev - curr) / (1000 * 60 * 60 * 24);
+      if (diff === 1) streak++;
+      else break;
+    }
+  }
+
+  res.render("dashboard", {
+    title: "Dashboard",
+    user: req.user,
+    todayMood: todayCheckin ? todayCheckin.mood : null,
+    avgMood,
+    streak,
+    chartData: last7.reverse()
+  });
 });
 
 module.exports = router;

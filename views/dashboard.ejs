@@ -1,91 +1,158 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MindCare - Your Mental Wellness Partner</title>
+<div id="chat-widget"></div>
 
-    <script src="https://cdn.tailwindcss.com"></script>
+<script>
+  fetch("/chat-widget.html")
+    .then(res => res.text())
+    .then(html => {
+      document.getElementById("chat-widget").innerHTML = html;
 
-    <script src="https://unpkg.com/lucide-react@latest/dist/umd/lucide-react.js"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
+      // 🔥 NOW elements exist — attach JS
+      const toggleBtn = document.getElementById("chat-toggle");
+      const chatBox = document.getElementById("chat-box");
+      const form = document.getElementById("chat-form");
+      const input = document.getElementById("message-input");
+      const messages = document.getElementById("messages");
 
-</head>
-<body class="bg-gray-50">
+      // Toggle rocket
+      toggleBtn.addEventListener("click", () => {
+        chatBox.style.display =
+          chatBox.style.display === "flex" ? "none" : "flex";
+      });
 
-    <div class="min-h-screen">
-        <section class="relative py-20 px-4">
-            <div class="max-w-7xl mx-auto text-center">
-                <div class="mb-8">
-                    <div class="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-blue-500 to-green-500 rounded-full mb-6">
-                        <i data-lucide="heart" class="h-10 w-10 text-white"></i>
-                    </div>
-                    <h1 class="text-4xl md:text-6xl font-bold text-gray-800 mb-6">
-                        Your Mental Wellness,
-                        <br />
-                        <span class="bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent">
-                            Our Priority
-                        </span>
-                    </h1>
-                    <p class="text-xl text-gray-600 mb-8 max-w-3xl mx-auto leading-relaxed">
-                        A comprehensive digital platform providing stigma-free psychological support tailored for Indian college students. Get help when you need it, how you need it.
-                    </p>
-                </div>
-                
-                <div class="flex flex-col sm:flex-row gap-4 justify-center mb-16">
-                    <a href="/chat" class="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-8 py-4 rounded-xl text-lg font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg">
-                        Start AI Support Chat
-                    </a>
-                    <a href="/crisis" class="bg-red-600 hover:bg-red-700 text-white px-8 py-4 rounded-xl text-lg font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg">
-                        Need Immediate Help?
-                    </a>
-                </div>
+      // Send message
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
 
-                <div class="flex flex-wrap justify-center gap-6 text-sm text-gray-600">
-                    <div class="flex items-center space-x-2">
-                        <i data-lucide="shield" class="h-4 w-4 text-green-600"></i>
-                        <span>100% Confidential</span>
-                    </div>
-                    <div class="flex items-center space-x-2">
-                        <i data-lucide="check-circle" class="h-4 w-4 text-blue-600"></i>
-                        <span>Professional Support</span>
-                    </div>
-                    <div class="flex items-center space-x-2">
-                        <i data-lucide="heart" class="h-4 w-4 text-purple-600"></i>
-                        <span>Culturally Sensitive</span>
-                    </div>
-                </div>
-            </div>
-        </section>
+        const text = input.value.trim();
+        if (!text) return;
 
-        <section class="bg-white py-16">
-            <div class="max-w-7xl mx-auto px-4">
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
-                    <div class="text-center">
-                        <div class="text-3xl md:text-4xl font-bold text-blue-600 mb-2">24/7</div>
-                        <div class="text-gray-600 font-medium">Support Available</div>
-                    </div>
-                    <div class="text-center">
-                        <div class="text-3xl md:text-4xl font-bold text-blue-600 mb-2">100%</div>
-                        <div class="text-gray-600 font-medium">Anonymous & Confidential</div>
-                    </div>
-                    <div class="text-center">
-                        <div class="text-3xl md:text-4xl font-bold text-blue-600 mb-2">5+</div>
-                        <div class="text-gray-600 font-medium">Regional Languages</div>
-                    </div>
-                    <div class="text-center">
-                        <div class="text-3xl md:text-4xl font-bold text-blue-600 mb-2">500+</div>
-                        <div class="text-gray-600 font-medium">Students Helped</div>
-                    </div>
-                </div>
-            </div>
-        </section>
+        messages.innerHTML += `
+          <div class="msg-user mb-2">
+            <span>${text}</span>
+          </div>
+        `;
+        input.value = "";
+        messages.scrollTop = messages.scrollHeight;
 
-       
+        const res = await fetch("/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: text }),
+        });
+
+        const data = await res.json();
+
+        messages.innerHTML += `
+          <div class="msg-bot mb-2">
+            <span>${data.reply}</span>
+          </div>
+        `;
+        messages.scrollTop = messages.scrollHeight;
+      });
+    });
+</script>
+
+<div class="container-fluid mt-3">
+
+  <!-- HEADER -->
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+      <h5 class="fw-semibold mb-0">
+        Welcome back, <%= user.name %>
+      </h5>
+      <small class="text-muted">
+        Your mental wellness snapshot
+      </small>
     </div>
 
-    <script>
-        lucide.createIcons();
-    </script>
-</body>
-</html>
+    <a href="/checkin" class="btn btn-sm btn-primary">
+      + Log Mood
+    </a>
+  </div>
+
+  <!-- STATS -->
+ <div class="row g-2 mb-3">
+
+  <!-- Today Mood -->
+  <div class="col-md-3 col-sm-6">
+    <div class="card shadow-sm h-100">
+      <div class="card-body py-3">
+        <small class="text-muted">😊 Today’s Mood</small>
+        <div class="fs-6 fw-semibold mt-1">
+          <%= todayMood ? todayMood + "/10" : "Not logged" %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Weekly Average -->
+  <div class="col-md-3 col-sm-6">
+    <div class="card shadow-sm h-100">
+      <div class="card-body py-3">
+        <small class="text-muted">📊 Weekly Avg</small>
+        <div class="fs-6 fw-semibold mt-1">
+          <%= avgMood ? avgMood + "/10" : "--" %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Streak -->
+  <div class="col-md-3 col-sm-6">
+    <div class="card shadow-sm h-100">
+      <div class="card-body py-3">
+        <small class="text-muted">🔥 Streak</small>
+        <div class="fs-6 fw-semibold mt-1">
+          <%= streak %> days
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- CHART -->
+  <div class="card shadow-sm">
+    <div class="card-body py-3">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <h6 class="fw-semibold mb-0">Weekly Mood Trend</h6>
+        <small class="text-muted">Last 7 days</small>
+      </div>
+      <canvas id="moodChart" height="90"></canvas>
+    </div>
+  </div>
+
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+const labels = JSON.parse('<%- JSON.stringify(chartData.map(c => new Date(c.date).toLocaleDateString("en-US", { weekday: "short" }))) %>');
+
+const data = JSON.parse('<%- JSON.stringify(chartData.map(c => c.mood)) %>');
+
+new Chart(document.getElementById("moodChart"), {
+  type: "line",
+  data: {
+    labels,
+    datasets: [{
+      data,
+      borderColor: "#6366f1",
+      backgroundColor: "rgba(99,102,241,0.15)",
+      fill: true,
+      tension: 0.4
+    }]
+  },
+  options: {
+    plugins: { legend: { display: false }},
+    scales: { y: { min: 0, max: 10 }}
+  }
+});
+</script>

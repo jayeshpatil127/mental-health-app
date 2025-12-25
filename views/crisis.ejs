@@ -1,75 +1,158 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Crisis Support</title>
-  <link rel="stylesheet" href="/css/style.css"> <!-- optional: your global CSS -->
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f0f7f9;
-      margin: 0;
-      padding: 0;
-    }
-    .container {
-      max-width: 700px;
-      margin: 50px auto;
-      background: #fff;
-      padding: 30px;
-      border-radius: 14px;
-      box-shadow: 0 6px 25px rgba(0,0,0,0.1);
-      text-align: center;
-    }
-    h1 {
-      color: #007bff;
-      margin-bottom: 20px;
-    }
-    p {
-      font-size: 1rem;
-      margin: 15px 0;
-    }
-    a.helpline {
-      display: inline-block;
-      background: #007bff;
-      color: #fff;
-      padding: 12px 20px;
-      border-radius: 25px;
-      text-decoration: none;
-      font-weight: bold;
-      margin-top: 15px;
-      transition: 0.3s;
-    }
-    a.helpline:hover {
-      background: #0056b3;
-    }
-    .tips {
-      margin-top: 25px;
-      text-align: left;
-    }
-    .tips li {
-      margin-bottom: 10px;
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <h1>🚨 Crisis Support</h1>
-    <p>If you or someone you know is struggling, help is just a call away. Please reach out.</p>
+<div id="chat-widget"></div>
 
-    <a class="helpline" href="tel:+91-9152987821">📞 India: +91-9152987821</a>
-    <a class="helpline" href="tel:112">📞 Emergency Services: 112</a>
+<script>
+  fetch("/chat-widget.html")
+    .then(res => res.text())
+    .then(html => {
+      document.getElementById("chat-widget").innerHTML = html;
 
-    <div class="tips">
-      <h3>💡 Tips to cope in difficult times:</h3>
-      <ul>
-        <li>Take deep, slow breaths.</li>
-        <li>Talk to someone you trust about your feelings.</li>
-        <li>Write down your thoughts or keep a journal.</li>
-        <li>Engage in calming activities (walk, music, meditation).</li>
-        <li>Stay connected with supportive people.</li>
-      </ul>
+      // 🔥 NOW elements exist — attach JS
+      const toggleBtn = document.getElementById("chat-toggle");
+      const chatBox = document.getElementById("chat-box");
+      const form = document.getElementById("chat-form");
+      const input = document.getElementById("message-input");
+      const messages = document.getElementById("messages");
+
+      // Toggle rocket
+      toggleBtn.addEventListener("click", () => {
+        chatBox.style.display =
+          chatBox.style.display === "flex" ? "none" : "flex";
+      });
+
+      // Send message
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const text = input.value.trim();
+        if (!text) return;
+
+        messages.innerHTML += `
+          <div class="msg-user mb-2">
+            <span>${text}</span>
+          </div>
+        `;
+        input.value = "";
+        messages.scrollTop = messages.scrollHeight;
+
+        const res = await fetch("/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: text }),
+        });
+
+        const data = await res.json();
+
+        messages.innerHTML += `
+          <div class="msg-bot mb-2">
+            <span>${data.reply}</span>
+          </div>
+        `;
+        messages.scrollTop = messages.scrollHeight;
+      });
+    });
+</script>
+
+
+<div class="container my-4">
+
+  <!-- ================= IMMEDIATE ALERT ================= -->
+  <div class="alert alert-danger border-0 shadow-sm">
+    <h4 class="mb-2">🚨 Immediate Danger</h4>
+    <p class="mb-2">
+      If you or someone with you is in immediate danger, please seek help right now.
+    </p>
+
+    <div class="d-flex gap-3 flex-wrap">
+      <a href="tel:112" class="btn btn-danger">
+        📞 Call Emergency (112)
+      </a>
+      <a href="tel:9152987821" class="btn btn-outline-danger">
+        📞 Mental Health Helpline (India)
+      </a>
     </div>
   </div>
-</body>
-</html>
+
+  <!-- ================= SUPPORT OPTIONS ================= -->
+  <div class="row g-4 mt-1">
+
+    <!-- HELPLINES -->
+    <div class="col-md-6">
+      <div class="card h-100 shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title">📞 Crisis Helplines (India)</h5>
+
+          <ul class="list-group list-group-flush mt-3">
+            <li class="list-group-item">
+              <strong>KIRAN Helpline</strong><br>
+              1800-599-0019 (24/7)
+            </li>
+            <li class="list-group-item">
+              <strong>AASRA</strong><br>
+              91-9820466726
+            </li>
+            <li class="list-group-item">
+              <strong>iCall</strong><br>
+              9152987821
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- IMMEDIATE COPING -->
+    <div class="col-md-6">
+      <div class="card h-100 shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title">🧠 Right Now – What You Can Do</h5>
+
+          <ul class="list-group list-group-flush mt-3">
+            <li class="list-group-item">
+              🌬️ Breathe slowly — inhale 4 sec, exhale 6 sec
+            </li>
+            <li class="list-group-item">
+              👀 Name 5 things you can see around you
+            </li>
+            <li class="list-group-item">
+              ✍️ Write what you’re feeling (no judgment)
+            </li>
+            <li class="list-group-item">
+              🤝 Contact someone you trust
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ================= WARNING SIGNS ================= -->
+  <div class="card shadow-sm mt-4">
+    <div class="card-body">
+      <h5 class="card-title">⚠️ Warning Signs</h5>
+
+      <div class="row mt-3">
+        <div class="col-md-6">
+          <ul class="small">
+            <li>Talking about feeling hopeless</li>
+            <li>Withdrawing from people</li>
+            <li>Extreme mood changes</li>
+          </ul>
+        </div>
+        <div class="col-md-6">
+          <ul class="small">
+            <li>Talking about death or self-harm</li>
+            <li>Sleeping too little or too much</li>
+            <li>Sudden risky behavior</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= SAFETY NOTE ================= -->
+  <div class="alert alert-warning small text-center mt-4">
+    This app is not a replacement for professional care.  
+    If you feel unsafe, please contact emergency services immediately.
+  </div>
+
+</div>

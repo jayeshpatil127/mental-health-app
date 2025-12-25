@@ -1,0 +1,131 @@
+<div id="chat-widget"></div>
+
+<script>
+  fetch("/chat-widget.html")
+    .then(res => res.text())
+    .then(html => {
+      document.getElementById("chat-widget").innerHTML = html;
+
+      // 🔥 NOW elements exist — attach JS
+      const toggleBtn = document.getElementById("chat-toggle");
+      const chatBox = document.getElementById("chat-box");
+      const form = document.getElementById("chat-form");
+      const input = document.getElementById("message-input");
+      const messages = document.getElementById("messages");
+
+      // Toggle rocket
+      toggleBtn.addEventListener("click", () => {
+        chatBox.style.display =
+          chatBox.style.display === "flex" ? "none" : "flex";
+      });
+
+      // Send message
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const text = input.value.trim();
+        if (!text) return;
+
+        messages.innerHTML += `
+          <div class="msg-user mb-2">
+            <span>${text}</span>
+          </div>
+        `;
+        input.value = "";
+        messages.scrollTop = messages.scrollHeight;
+
+        const res = await fetch("/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: text }),
+        });
+
+        const data = await res.json();
+
+        messages.innerHTML += `
+          <div class="msg-bot mb-2">
+            <span>${data.reply}</span>
+          </div>
+        `;
+        messages.scrollTop = messages.scrollHeight;
+      });
+    });
+</script>
+
+
+
+
+<div class="container mt-4">
+  <h3 class="mb-4">📊 My Daily Check-Ins</h3>
+
+  <!-- Legend -->
+  <!-- Risk Legend -->
+<div class="alert alert-light border mb-3 d-flex align-items-center gap-3 flex-wrap">
+  <span class="fw-semibold">Color meaning:</span>
+
+  <span class="badge bg-danger">
+    High Risk
+  </span>
+  <span class="text-muted small">
+    Anxiety ≥ 7 OR Stress ≥ 7 OR Sleep &lt; 5 hrs
+  </span>
+</div>
+
+
+  <% if (!checkins || checkins.length === 0) { %>
+    <div class="alert alert-info">
+      No check-ins yet.
+    </div>
+  <% } else { %>
+
+    <div class="table-responsive">
+      <table class="table table-bordered table-striped align-middle text-center">
+        <thead class="table">
+          <tr>
+            <th>Date</th>
+            <th>Mood</th>
+            <th>Anxiety</th>
+            <th>Stress</th>
+            <th>Sleep (hrs)</th>
+            <th>Note</th>
+          </tr>
+        </thead>
+
+        <tbody>
+  <% checkins.forEach(c => { %>
+
+    <% 
+      let reasons = [];
+      if (c.anxiety >= 7) reasons.push("High anxiety");
+      if (c.stress >= 7) reasons.push("High stress");
+      if (c.sleepHours < 5) reasons.push("Poor sleep");
+    %>
+
+    <tr class="<%= reasons.length ? 'table-danger' : '' %>">
+      <td><%= new Date(c.date).toDateString() %></td>
+      <td><%= c.mood %></td>
+      <td><%= c.anxiety %></td>
+      <td><%= c.stress %></td>
+      <td><%= c.sleepHours %></td>
+      <td><%= c.note || "-" %></td>
+    </tr>
+
+    <!-- Explanation row -->
+    <tr class="<%= reasons.length ? 'table-danger' : 'table-light' %>">
+      <td colspan="6" class="text-start small fst-italic">
+        <% if (reasons.length) { %>
+          ⚠️ Reason: <%= reasons.join(", ") %>
+        <% } else { %>
+          ✅ Normal day
+        <% } %>
+      </td>
+    </tr>
+
+  <% }) %>
+</tbody>
+
+      </table>
+    </div>
+
+  <% } %>
+</div>

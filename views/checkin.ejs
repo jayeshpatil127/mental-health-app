@@ -1,0 +1,265 @@
+<div id="chat-widget"></div>
+
+<script>
+  fetch("/chat-widget.html")
+    .then(res => res.text())
+    .then(html => {
+      document.getElementById("chat-widget").innerHTML = html;
+
+      // NOW elements exist — attach JS
+      const toggleBtn = document.getElementById("chat-toggle");
+      const chatBox = document.getElementById("chat-box");
+      const form = document.getElementById("chat-form");
+      const input = document.getElementById("message-input");
+      const messages = document.getElementById("messages");
+
+      
+      toggleBtn.addEventListener("click", () => {
+        chatBox.style.display =
+          chatBox.style.display === "flex" ? "none" : "flex";
+      });
+
+      // Send message
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const text = input.value.trim();
+        if (!text) return;
+
+        messages.innerHTML += `
+          <div class="msg-user mb-2">
+            <span>${text}</span>
+          </div>
+        `;
+        input.value = "";
+        messages.scrollTop = messages.scrollHeight;
+
+        const res = await fetch("/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: text }),
+        });
+
+        const data = await res.json();
+
+        messages.innerHTML += `
+          <div class="msg-bot mb-2">
+            <span>${data.reply}</span>
+          </div>
+        `;
+        messages.scrollTop = messages.scrollHeight;
+      });
+    });
+</script>
+
+
+<div class="container my-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-7 col-md-9">
+
+    
+      <div class="card border-0 shadow-sm rounded-4">
+
+    
+        <div class="card-header bg-white text-center py-4 border-0">
+          <h4 class="fw-bold mb-1">🧠 Daily Mental Health Check-In</h4>
+          <p class="text-muted mb-0">
+            This check-in helps track your emotional well-being
+          </p>
+        </div>
+
+      
+        <div class="card-body px-4 py-4">
+
+          <form id="checkinForm" autocomplete="off">
+
+            <div class="row g-4">
+
+              <!-- MOOD -->
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">
+                  Overall Mood
+                </label>
+
+                <select
+                  name="mood"
+                  id="moodSelect"
+                  class="form-select"
+                  required
+                >
+                  <option value="">Select how you feel</option>
+                  <option value="1">😞 Very Low</option>
+                  <option value="3">🙁 Low</option>
+                  <option value="5">😐 Neutral</option>
+                  <option value="7">🙂 Good</option>
+                  <option value="9">😄 Very Good</option>
+                </select>
+
+                <small
+                  id="moodHint"
+                  class="text-muted mt-2 d-block"
+                ></small>
+              </div>
+<!-- ANXIETY -->
+<div class="col-md-6">
+  <label class="form-label fw-semibold">
+    Anxiety Level
+  </label>
+
+  <select
+    name="anxiety"
+    class="form-select"
+    required
+  >
+    <option value="">Select anxiety level</option>
+    <option value="2">😌 Calm</option>
+    <option value="4">🙂 Slightly anxious</option>
+    <option value="6">😟 Moderate anxiety</option>
+    <option value="8">😣 High anxiety</option>
+    <option value="10">😰 Extreme anxiety</option>
+  </select>
+
+  <small class="text-muted">
+    Based on how anxious you felt most of the day
+  </small>
+</div>
+
+
+<div class="col-md-6">
+  <label class="form-label fw-semibold">
+    Stress Level
+  </label>
+
+  <select
+    name="stress"
+    class="form-select"
+    required
+  >
+    <option value="">Select stress level</option>
+    <option value="2">🌿 Relaxed</option>
+    <option value="4">🙂 Slight stress</option>
+    <option value="6">😓 Moderate stress</option>
+    <option value="8">😖 High stress</option>
+    <option value="10">🔥 Overwhelmed</option>
+  </select>
+
+  <small class="text-muted">
+    Overall stress across work, studies, or personal life
+  </small>
+</div>
+
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">
+                  Sleep Duration (hours)
+                </label>
+                <input
+                  type="number"
+                  name="sleepHours"
+                  min="0"
+                  max="24"
+                  class="form-control"
+                  placeholder="e.g. 7"
+                  required
+                />
+              </div>
+
+              <div class="col-12">
+                <label class="form-label fw-semibold">
+                  Additional Notes (optional)
+                </label>
+                <textarea
+                  name="note"
+                  rows="3"
+                  class="form-control"
+                  placeholder="Anything you want to mention about today…"
+                ></textarea>
+              </div>
+
+            </div>
+
+            <div class="d-grid mt-4">
+              <button
+                type="submit"
+                class="btn btn-primary btn-lg rounded-pill"
+              >
+                Save Today’s Check-In
+              </button>
+            </div>
+
+          </form>
+
+          <div
+            id="status"
+            class="text-center mt-3 fw-semibold"
+          ></div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const form = document.getElementById("checkinForm");
+  const status = document.getElementById("status");
+  const moodSelect = document.getElementById("moodSelect");
+  const moodHint = document.getElementById("moodHint");
+
+  const moodMessages = {
+    1: "Tough day. Please take care of yourself.",
+    3: "Low mood detected. Small steps help.",
+    5: "You seem emotionally balanced today.",
+    7: "Positive mood noted. Keep going.",
+    9: "Excellent mood. Great to see this!"
+  };
+
+  moodSelect.addEventListener("change", () => {
+    moodHint.textContent =
+      moodMessages[moodSelect.value] || "";
+  });
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const payload = {
+      mood: form.mood.value,
+      anxiety: form.anxiety.value,
+      stress: form.stress.value,
+      sleepHours: form.sleepHours.value,
+      note: form.note.value
+    };
+
+    try {
+      const res = await fetch("/checkin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (res.status === 401) {
+        status.innerHTML =
+          "<span class='text-danger'>Session expired. Please login again.</span>";
+        return;
+      }
+
+      const result = await res.json();
+
+      if (result.success) {
+        status.innerHTML =
+          "<span class='text-success'>✔ Check-in saved successfully</span>";
+        form.reset();
+        moodHint.textContent = "";
+      } else {
+        status.innerHTML =
+          "<span class='text-danger'>Failed to save check-in</span>";
+      }
+
+    } catch {
+      status.innerHTML =
+        "<span class='text-danger'>Server error. Try again.</span>";
+    }
+  });
+});
+</script>

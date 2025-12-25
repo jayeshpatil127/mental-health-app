@@ -1,78 +1,120 @@
-<h1 class="mb-5 text-primary text-center" style="font-size:2.5rem;">📚 Mental Health Resources & Relaxation</h1>
+<div id="chat-widget"></div>
 
-<div class="row g-4 justify-content-center">
+<script>
+  fetch("/chat-widget.html")
+    .then(res => res.text())
+    .then(html => {
+      document.getElementById("chat-widget").innerHTML = html;
 
-  <!-- Resource Cards -->
-  <% resources.forEach(resource => { %>
-    <div class="col-sm-6 col-md-4 col-lg-3">
-      <a href="<%= resource.link %>" target="_blank" class="card h-100 shadow-sm p-3 text-decoration-none text-dark hover-card">
-        <div class="icon-wrapper mb-3">
-          <span class="icon">📖</span>
-        </div>
-        <h6 class="text-center fw-bold"><%= resource.title %></h6>
-        <p class="text-center text-muted small mt-2">Click to open</p>
-      </a>
-    </div>
-  <% }) %>
+      // 🔥 NOW elements exist — attach JS
+      const toggleBtn = document.getElementById("chat-toggle");
+      const chatBox = document.getElementById("chat-box");
+      const form = document.getElementById("chat-form");
+      const input = document.getElementById("message-input");
+      const messages = document.getElementById("messages");
 
-  <!-- Relaxation Game Card -->
-  <div class="col-sm-6 col-md-4 col-lg-3">
-    <a href="/game" class="card h-100 shadow-sm p-3 text-decoration-none text-dark hover-card">
-      <div class="icon-wrapper game-icon mb-3">
-        <span class="icon">🎮</span>
-      </div>
-      <h6 class="text-center fw-bold">Relaxing Game</h6>
-      <p class="text-center text-muted small mt-2">Click to play and relax</p>
-    </a>
+      // Toggle rocket
+      toggleBtn.addEventListener("click", () => {
+        chatBox.style.display =
+          chatBox.style.display === "flex" ? "none" : "flex";
+      });
+
+      // Send message
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const text = input.value.trim();
+        if (!text) return;
+
+        messages.innerHTML += `
+          <div class="msg-user mb-2">
+            <span>${text}</span>
+          </div>
+        `;
+        input.value = "";
+        messages.scrollTop = messages.scrollHeight;
+
+        const res = await fetch("/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: text }),
+        });
+
+        const data = await res.json();
+
+        messages.innerHTML += `
+          <div class="msg-bot mb-2">
+            <span>${data.reply}</span>
+          </div>
+        `;
+        messages.scrollTop = messages.scrollHeight;
+      });
+    });
+</script>
+
+
+<div class="container mt-4">
+
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="fw-bold">📚 Mental Health Resources</h3>
+    <span class="text-muted">Curated reads & tools for you</span>
   </div>
 
+  <div class="row g-4">
+
+    <% resources.forEach(r => { %>
+      <div class="col-lg-4 col-md-6">
+        <div class="card h-100 shadow-sm border-0">
+
+          <!-- Image -->
+          <img
+            src="<%= r.image %>"
+            class="card-img-top"
+            style="height: 180px; object-fit: cover;"
+            alt="<%= r.title %>"
+          >
+
+          <div class="card-body d-flex flex-column">
+
+            <!-- Tags -->
+            <div class="mb-2">
+              <span class="badge bg-light text-dark me-1">
+                <%= r.type %>
+              </span>
+              <span class="badge bg-secondary">
+                <%= r.category %>
+              </span>
+            </div>
+
+            <!-- Title -->
+            <h5 class="card-title mt-2">
+              <%= r.title %>
+            </h5>
+
+            <!-- Description -->
+            <p class="card-text text-muted small">
+              <%= r.description %>
+            </p>
+
+            <!-- Meta -->
+            <div class="d-flex justify-content-between text-muted small mt-auto">
+              <span>⏱ <%= r.duration %></span>
+              <span>👤 <%= r.author %></span>
+            </div>
+
+            <!-- CTA -->
+            <a
+              href="<%= r.link %>"
+              target="_blank"
+              class="btn btn-outline-primary btn-sm mt-3 w-100"
+            >
+              Read More ↗
+            </a>
+
+          </div>
+        </div>
+      </div>
+    <% }) %>
+
+  </div>
 </div>
-
-<style>
-/* Card hover effect */
-.hover-card {
-  transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
-  border-radius: 16px;
-  background: #ffffff;
-}
-.hover-card:hover {
-  transform: translateY(-8px) scale(1.03);
-  box-shadow: 0 12px 25px rgba(0,0,0,0.2);
-  background: #f9f9ff;
-}
-
-/* Icon wrapper styling */
-.icon-wrapper {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 120px;
-  background: #e8f0fe;
-  border-radius: 12px;
-  transition: background 0.3s ease;
-}
-.icon-wrapper .icon {
-  font-size: 3rem;
-}
-.hover-card:hover .icon-wrapper {
-  background: #d0e2ff;
-}
-
-/* Game card special color */
-.game-icon {
-  background: #d1e7dd;
-}
-.hover-card:hover .game-icon {
-  background: #bde3ca;
-}
-
-/* Responsive tweaks */
-@media (max-width: 768px) {
-  h1 {
-    font-size: 2rem;
-  }
-  .icon-wrapper {
-    height: 100px;
-  }
-}
-</style>

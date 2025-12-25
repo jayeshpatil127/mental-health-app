@@ -1,76 +1,98 @@
+// ================== LOAD ENV FIRST ==================
+require("dotenv").config();
+
+// ================== CORE IMPORTS ==================
 const express = require("express");
 const bodyParser = require("body-parser");
-const dotenv = require("dotenv");
 const expressLayouts = require("express-ejs-layouts");
 const mongoose = require("mongoose");
 const session = require("express-session");
 const passport = require("passport");
-const dashboardRoutes = require("./routes/dashboard");
-const moodRoutes = require("./routes/moodRoutes");
-const resourcesRoute = require("./routes/resources");
-const crisisRoutes = require("./routes/crisis");
 
-
-
-dotenv.config();
-
+// ================== APP INIT ==================
 const app = express();
 
+// ================== VIEW ENGINE ==================
 app.set("view engine", "ejs");
 app.set("layout", "layout");
 app.use(expressLayouts);
 
+// ================== MIDDLEWARES ==================
 app.use(express.static("public"));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-mongoose.connect("mongodb://127.0.0.1:27017/Testapp", {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
-.then(() => console.log("✅ MongoDB Connected"))
-.catch((err) => console.error("MongoDB Error:", err));
+// ================== DATABASE ==================
 
-app.use(session({
-  secret: "hackathonSecret",
-  resave: false,
-  saveUninitialized: false
-}));
+
+mongoose
+  .connect(process.env.ATLASDB_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
+  .then(() => console.log("MongoDB Connected"))
+  .catch((err) => {
+    console.error("MongoDB connection failed:", err.message);
+    process.exit(1);
+  });
+
+// ================== SESSION + AUTH ==================
+app.use(
+  session({
+    secret: "hackathonSecret",
+    resave: false,
+    saveUninitialized: false,
+  })
+);
 
 require("./config/passport")(passport);
 app.use(passport.initialize());
 app.use(passport.session());
 
+
+
 app.use((req, res, next) => {
-  res.locals.currentRoute = req.path;
-  res.locals.user = req.user || null; 
+  res.locals.title = "MindWell - Digital Mental Health Support";
   next();
 });
 
 
-
-const bookingRoutes = require("./routes/booking");
-
-
-const chatRoutes = require("./routes/chatRoutes");
-const quizRoutes = require("./routes/quiz");
-const authRoutes = require("./routes/auth");
-const adminRoutes = require("./routes/admin");
-
-app.use("/chat", chatRoutes);
-app.use("/quiz", quizRoutes);
-app.use("/", authRoutes);        
-app.use("/admin", adminRoutes);  
-app.use("/", dashboardRoutes);
-app.use("/mood-tracker", moodRoutes);
-app.use("/", resourcesRoute); 
-app.use("/", crisisRoutes);
-
-app.use("/booking", bookingRoutes);
-
-
-app.get("/", (req, res) => {
-  res.render("login",{title: 'Quizes'}); 
+// ================== GLOBAL LOCALS ==================
+app.use((req, res, next) => {
+  res.locals.currentRoute = req.path;
+  res.locals.user = req.user || null;
+  next();
 });
 
-app.listen(3000, () => console.log("🚀 Server running at http://localhost:3000"));
+// ================== ROUTES ==================
+app.use("/checkin", require("./routes/dailycheckin"));
+app.use("/api", require("./routes/riskRoutes"));
+app.use("/", require("./routes/dashboard"));
+app.use("/", require("./routes/profile"));
+
+
+
+
+app.use("/chat", require("./routes/chatRoutes"));
+
+
+app.use("/quiz", require("./routes/quiz"));
+
+app.use("/admin", require("./routes/admin"));
+
+app.use("/", require("./routes/auth"));
+
+app.use("/mood-tracker", require("./routes/moodRoutes"));
+app.use("/", require("./routes/resources"));
+app.use("/", require("./routes/crisis"));
+
+// ================== ROOT ==================
+app.get("/", (req, res) => {
+  res.render("login", { title: "MindWell Login" });
+});
+
+// ================== SERVER ==================
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () =>
+  console.log(` Server running at http://localhost:${PORT}`)
+);
